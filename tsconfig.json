@@ -1,9 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es2018",                          
-    "module": "esnext",
+    "target": "es2015",                          
+    "module": "amd",
     "moduleResolution": "node",                     
     "noEmitOnError": true,
+    "outFile": "./dist/build.js",
     "lib": ["es2017", "DOM"],                            
     "strict": true,  
     "esModuleInterop": false,                 

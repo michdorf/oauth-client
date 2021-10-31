@@ -1,5 +1,8 @@
-import ajax from "./ajax";
-import OAuthClient from "./oauthclient";
+"use strict";
+/* import ajax from "./ajax";
+import OAuthClient from "./oauthclient"; */
+/// <reference path="./ajax.ts" />
+/// <reference path="./oauthclient.ts" />
 var a = new OAuthClient({
     authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",
     token_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/token.php",
@@ -23,6 +26,6 @@ if (confirm("Er du klar?")) {
         }, 3000);
     }
     else {
-        a.requestToken("testscope");
+        a.authorizationCode("testscope");
     }
 }

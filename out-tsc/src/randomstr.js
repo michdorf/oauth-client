@@ -1,4 +1,5 @@
-export default function randomString(length, characters) {
+"use strict";
+function randomString(length, characters) {
     length = length === undefined ? 32 : length;
     characters = characters === undefined ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' : characters;
     var maxIndex = characters.length - 1;

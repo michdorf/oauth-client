@@ -1,44 +1,50 @@
-import randomString from './randomstr'
-import generateCodeChallenge from './valentinog'
-import ajax, {Setup} from './ajax'
-
-export async function _generateCodeChallenge(codeVerifier?: string) {
-    let stateSecret = codeVerifier || randomString();
-    return await generateCodeChallenge(stateSecret);// btoa(sha256(stateSecret));
-}
+// import randomString from './randomstr'
+// import generateCodeChallenge from './codeverifier'
+// import ajax, {Setup} from '../ajax'
+/// <reference path="codeverifier.ts" />
+/// <reference path="randomstr.ts" />
+declare let log: any
 
 interface Configuration {
     authorization_url: string;
     token_url?: string;
     client_id: string;
-    client_secret: string;
+    client_secret?: string;
     redirect_uri?: string;
 }
 
-interface Request {
-    state: string; /* uuid which will be returned by server whenever ready */
-    metadata: any;
+interface OAuth2Request {
+    type: 'code' | 'client_credentials';
+    state: string; /* uuid which will be returned by server whenever ready - used to find request */
+    metadata?: any;
     accessToken?: AccessToken;
     authorizationCode?: string;
-    codeVerifier: string;
+    codeVerifier?: string;
 }
 
 interface AccessToken {
-    access_token: string; 
+    access_token: string;
     expires_in: number;
-    token_type: "Bearer" | string; 
-    scope: string; 
+    token_type: "Bearer" | string;
+    scope: string;
     refresh_token: string;
 }
 
 class OAuthClient {
     private config: Configuration;
-    private requests: any[] = [];
+    private requests: OAuth2Request[] = [];
     private storageKey = "ab-oauth-requests";
     private accessToken: AccessToken;
 
     get authorization_url() {
         return this.config.authorization_url;
+    }
+    get token_url() {
+        if (this.config.token_url) {
+            return this.config.token_url;
+        }
+        const splitted = this.authorization_url.split("/");
+        return splitted.slice(0, splitted.length - 1).join("/") + "/token";
     }
 
     constructor(config: Configuration) {
@@ -63,7 +69,7 @@ class OAuthClient {
         if (window.location.hash.indexOf("code=")) {
             this.exchangeAuthCode();
         } else {
-            this.requestToken("wwapp offline_access");
+            this.authorizationCode("wwapp offline_access");
         }
     }
 
@@ -78,19 +84,21 @@ class OAuthClient {
     /**
      * Requests first authCode
      */
-    requestToken(scopes: string) {
+    authorizationCode(scopes: string, usePCKE?: boolean) {
+        usePCKE = typeof usePCKE === "undefined" ? true : !!usePCKE;
         const stateId = randomString(16);
         scopes = encodeURIComponent(scopes);
         let redirectUri = encodeURIComponent(this.config.redirect_uri || "");
-        const codeVerifier = randomString();
+        const codeVerifier = usePCKE ? randomString() : "";
         this.requests.push({
+            type: 'code',
             state: stateId, /* uuid which will be returned by server whenever ready */
-            metadata: {navn: "Michele"},
+            metadata: { author: "Michele de Chiffre" },
             codeVerifier: codeVerifier
         });
 
         this.store();
-        
+
         generateCodeChallenge(codeVerifier).then((codeChallenge) => {
             let endpoint = `${this.config.authorization_url}?`;
             endpoint += `response_type=code`;
@@ -98,77 +106,170 @@ class OAuthClient {
             endpoint += `&redirect_uri=${redirectUri}`;
             endpoint += `&scope=${scopes}`;
             endpoint += `&state=${stateId}`;
-            endpoint += `&code_challenge=${codeChallenge}`;
-            endpoint += `&code_challenge_method=S256`;
+            if (usePCKE) {
+                endpoint += `&code_challenge=${codeChallenge}`;
+                endpoint += `&code_challenge_method=S256`;
+            }
 
-            debugger;
             window.location.href = endpoint;
+        });
+    }
+
+    clientCredentials(scopes: string, headers?: {[key: string]: string}) {
+        const stateID = randomString(12);
+        this.requests.push({
+            type: 'client_credentials',
+            state: stateID,
+            metadata: {author: "Michele de Chiffre"}
+        });
+
+        this.store();
+
+        return new Promise((resolve, reject) => {
+            if (typeof this.config.client_secret === "undefined") {
+                reject('Client Secret must be defined');
+                return;
+            }
+
+            let ajaxConfig: Setup = {
+                method: "POST",
+                formEncoded: true,
+                data: "grant_type=client_credentials&client_id=" + this.config.client_id + "&client_secret=" + this.config.client_secret + "&scope=" + scopes,
+                success(d: string) {
+                    try {
+                        const parsed = JSON.parse(d) as AccessToken;
+
+                        const oauth2req = me.loadRequest(stateID);
+                        if (!oauth2req) {
+                            reject(`Request not found for state ${stateID}`);
+                            return;
+                        }
+                        oauth2req.accessToken = parsed;
+                        me.store();
+                        resolve(parsed);
+                    } catch (e) {
+                        reject(`Error parsing response ${d}`);
+                    }
+                },
+                error: reject
+            };
+
+            if (typeof headers !== "undefined") {
+                ajaxConfig.headers = headers;
+            }
+
+            let me = this;
+            ajax(this.token_url, ajaxConfig);
         });
     }
 
     exchangeAuthCode(hashstring?: string) {
         const USE_GET = false;
 
-        hashstring = hashstring || window.location.hash || window.location.search;
-        let parsed = this.parseHashstring(hashstring);
-        let authCode = parsed.code;
-        let state = parsed.state;
+        return new Promise((resolve, reject) => {
+            hashstring = hashstring || window.location.hash || window.location.search;
+            let parsed = this.parseHashstring(hashstring);
+            let authCode = parsed.code;
+            let state = parsed.state;
 
-        let request = this.loadRequest(state);
-        request.authorizationCode = authCode;
+            let request = this.loadRequest(state);
+            if (request === null) {
+                reject(`Request not saved correctly and not possible to load ${state}`);
+                return;
+            }
+            request.authorizationCode = authCode;
 
-        if (typeof request === "undefined") {
-            console.error(`Missing saved request for state (${state})`, "oauth");
-            return false;
-        }
-
-        // Lav et POST request for at få token
-        if (this.config.token_url) { // Assert true
-            let postData = `grant_type=authorization_code`;
-            postData += `&client_id=${this.config.client_id}`;
-            postData += `&client_secret=${this.config.client_secret}`;
-            postData += `&redirect_uri=${this.config.redirect_uri}`;
-            postData += `&code=${authCode}`;
-            postData += `&code_verifier=${request.codeVerifier}`;
-
-            let me = this;
-            let config: Setup = {
-                method: USE_GET ? "GET" : "POST",
-                formEncoded: !USE_GET,
-                success(d) {
-                    var response = JSON.parse(d);
-                    request.accessToken = response;
-                    me.accessToken = response;
-                }
-            };
-            if (!USE_GET) {
-                config.data = postData;
+            if (typeof request === "undefined") {
+                console.error(`Missing saved request for state (${state})`, "oauth");
+                return false;
             }
 
-            ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
-        }
+            // Lav et POST request for at få token
+            if (this.config.token_url) { // Assert true
+                let postData = `grant_type=authorization_code`;
+                postData += `&client_id=${this.config.client_id}`;
+                postData += `&client_secret=${this.config.client_secret}`;
+                postData += `&redirect_uri=${this.config.redirect_uri}`;
+                postData += `&code=${authCode}`;
+                postData += `&code_verifier=${request.codeVerifier}`;
+
+                let me = this;
+
+                let config: Setup = {
+                    method: USE_GET ? "GET" : "POST",
+                    formEncoded: !USE_GET,
+                    success(d: any) {
+                        var response = JSON.parse(d);
+                        if (request) {
+                            request.accessToken = response;
+                        }
+                        me.accessToken = response;
+                        me.store();
+                        resolve(response);
+                    }
+                };
+                if (!USE_GET) {
+                    config.data = postData;
+                }
+
+                ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
+            }
+        });
     }
 
-    getAccessToken() {
+    getAccessToken(): string | false {
         if (!this.accessToken.access_token) {
-            this.accessToken = this.findLatestAccessToken();
+            let tmp = this.findLatestAccessToken();
+            if (tmp !== null) {
+                this.accessToken = tmp;
+            }
         }
 
-        return this.accessToken.access_token || undefined;
+        return this.accessToken.access_token || false;
     }
 
-    findLatestAccessToken(): AccessToken {
-        return this.requests.reverse().find((v) => typeof v.accessToken !== "undefined" && v.accessToken.access_token !== "").map((v: Request) => v.accessToken);
+    hasRefreshToken(): boolean {
+        log.warn("hasRefreshToken() not implemented yet", "oauth");
+        return false;
+    }
+
+    refreshToken(): Promise<string> {
+        log.warn("refreshToken() not implemented yet", "oauth");
+        return new Promise((resolve, reject) => {
+            var uri = this.config.token_url;
+            if (typeof uri === "undefined") {
+                reject(false);
+                return;
+            }
+            ajax(uri, {
+                run: (resp: string) => {
+                    resolve(resp);
+                }
+            });
+            reject(false);
+        });
+    }
+
+    findLatestAccessToken(): AccessToken | null {
+        let accessToken: AccessToken | undefined;
+        for (let i = this.requests.length - 1; i >= 0; i--) {
+            accessToken = this.requests[i].accessToken;
+            if (typeof accessToken !== "undefined" && accessToken.access_token !== "") {
+                return accessToken;
+            }
+        }
+
+        return null;
     }
 
     parseHashstring(hashstring: string) {
         type acceptedKeys = "code" | "state";
         const keys = ["code", "state"];
         let s = hashstring.split("&");
-        let m, r = {code: "", state: ""}, key: acceptedKeys;
+        let m, r = { code: "", state: "" }, key: acceptedKeys;
         for (var i = 0; i < s.length; i++) {
             m = s[i].split("=");
-            key = (m[0].replace(/^[#\?]/g,"") as acceptedKeys);
+            key = (m[0].replace(/^[#\?]/g, "") as acceptedKeys);
             if (typeof r[key] !== "undefined") {
                 r[key] = decodeURIComponent(m[1]);
             }
@@ -177,9 +278,9 @@ class OAuthClient {
         return r;
     }
 
-    loadRequest(stateId: string): Request {
-        return this.requests.find((value) => value.state === stateId);
+    loadRequest(stateId: string): OAuth2Request | null {
+        return this.requests.find((value: OAuth2Request) => value.state === stateId) || null;
     }
 }
 
-export default OAuthClient;
+// export default OAuthClient;

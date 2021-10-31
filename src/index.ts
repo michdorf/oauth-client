@@ -1,5 +1,7 @@
-import ajax from "./ajax";
-import OAuthClient from "./oauthclient";
+/* import ajax from "./ajax";
+import OAuthClient from "./oauthclient"; */
+/// <reference path="./ajax.ts" />
+/// <reference path="./oauthclient.ts" />
 
 var a = new OAuthClient({
     authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",
@@ -17,14 +19,14 @@ if (confirm("Er du klar?")) {
             let accessToken = a.getAccessToken();
             console.log(accessToken);
 
-            ajax("https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php", {
-                headers: {"Authorization": "Bearer " + accessToken},
+            ajax(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php?access_token=${accessToken}`, {
+                /* headers: {"Authorization": "Bearer " + accessToken}, */
                 run(data) {
                     console.log("Du har ressourcen: ", data);
                 }
             });
         }, 3000);
     }else {
-        a.requestToken("testscope");
+        a.authorizationCode("testscope");
     }
 }

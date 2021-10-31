@@ -1,10 +1,6 @@
-import randomString from './randomstr';
-import generateCodeChallenge from './valentinog';
-import ajax from './ajax';
-export async function _generateCodeChallenge(codeVerifier) {
-    let stateSecret = codeVerifier || randomString();
-    return await generateCodeChallenge(stateSecret); // btoa(sha256(stateSecret));
-}
+"use strict";
+/// <reference path="codeverifier.ts" />
+/// <reference path="randomstr.ts" />
 class OAuthClient {
     constructor(config) {
         this.requests = [];
@@ -25,6 +21,13 @@ class OAuthClient {
     get authorization_url() {
         return this.config.authorization_url;
     }
+    get token_url() {
+        if (this.config.token_url) {
+            return this.config.token_url;
+        }
+        const splitted = this.authorization_url.split("/");
+        return splitted.slice(0, splitted.length - 1).join("/") + "/token";
+    }
     test() {
         debugger;
         console.log("Tester oauth client");
@@ -32,7 +35,7 @@ class OAuthClient {
             this.exchangeAuthCode();
         }
         else {
-            this.requestToken("wwapp offline_access");
+            this.authorizationCode("wwapp offline_access");
         }
     }
     store() {
@@ -44,14 +47,16 @@ class OAuthClient {
     /**
      * Requests first authCode
      */
-    requestToken(scopes) {
+    authorizationCode(scopes, usePCKE) {
+        usePCKE = typeof usePCKE === "undefined" ? true : !!usePCKE;
         const stateId = randomString(16);
         scopes = encodeURIComponent(scopes);
         let redirectUri = encodeURIComponent(this.config.redirect_uri || "");
-        const codeVerifier = randomString();
+        const codeVerifier = usePCKE ? randomString() : "";
         this.requests.push({
+            type: 'code',
             state: stateId,
-            metadata: { navn: "Michele" },
+            metadata: { author: "Michele de Chiffre" },
             codeVerifier: codeVerifier
         });
         this.store();
@@ -62,56 +67,139 @@ class OAuthClient {
             endpoint += `&redirect_uri=${redirectUri}`;
             endpoint += `&scope=${scopes}`;
             endpoint += `&state=${stateId}`;
-            endpoint += `&code_challenge=${codeChallenge}`;
-            endpoint += `&code_challenge_method=S256`;
-            debugger;
+            if (usePCKE) {
+                endpoint += `&code_challenge=${codeChallenge}`;
+                endpoint += `&code_challenge_method=S256`;
+            }
             window.location.href = endpoint;
+        });
+    }
+    clientCredentials(scopes, headers) {
+        const stateID = randomString(12);
+        this.requests.push({
+            type: 'client_credentials',
+            state: stateID,
+            metadata: { author: "Michele de Chiffre" }
+        });
+        this.store();
+        return new Promise((resolve, reject) => {
+            if (typeof this.config.client_secret === "undefined") {
+                reject('Client Secret must be defined');
+                return;
+            }
+            let ajaxConfig = {
+                method: "POST",
+                formEncoded: true,
+                data: "grant_type=client_credentials&client_id=" + this.config.client_id + "&client_secret=" + this.config.client_secret + "&scope=" + scopes,
+                success(d) {
+                    try {
+                        const parsed = JSON.parse(d);
+                        const oauth2req = me.loadRequest(stateID);
+                        if (!oauth2req) {
+                            reject(`Request not found for state ${stateID}`);
+                            return;
+                        }
+                        oauth2req.accessToken = parsed;
+                        me.store();
+                        resolve(parsed);
+                    }
+                    catch (e) {
+                        reject(`Error parsing response ${d}`);
+                    }
+                },
+                error: reject
+            };
+            if (typeof headers !== "undefined") {
+                ajaxConfig.headers = headers;
+            }
+            let me = this;
+            ajax(this.token_url, ajaxConfig);
         });
     }
     exchangeAuthCode(hashstring) {
         const USE_GET = false;
-        hashstring = hashstring || window.location.hash || window.location.search;
-        let parsed = this.parseHashstring(hashstring);
-        let authCode = parsed.code;
-        let state = parsed.state;
-        let request = this.loadRequest(state);
-        request.authorizationCode = authCode;
-        if (typeof request === "undefined") {
-            console.error(`Missing saved request for state (${state})`, "oauth");
-            return false;
-        }
-        // Lav et POST request for at få token
-        if (this.config.token_url) { // Assert true
-            let postData = `grant_type=authorization_code`;
-            postData += `&client_id=${this.config.client_id}`;
-            postData += `&client_secret=${this.config.client_secret}`;
-            postData += `&redirect_uri=${this.config.redirect_uri}`;
-            postData += `&code=${authCode}`;
-            postData += `&code_verifier=${request.codeVerifier}`;
-            let me = this;
-            let config = {
-                method: USE_GET ? "GET" : "POST",
-                formEncoded: !USE_GET,
-                success(d) {
-                    var response = JSON.parse(d);
-                    request.accessToken = response;
-                    me.accessToken = response;
-                }
-            };
-            if (!USE_GET) {
-                config.data = postData;
+        return new Promise((resolve, reject) => {
+            hashstring = hashstring || window.location.hash || window.location.search;
+            let parsed = this.parseHashstring(hashstring);
+            let authCode = parsed.code;
+            let state = parsed.state;
+            let request = this.loadRequest(state);
+            if (request === null) {
+                reject(`Request not saved correctly and not possible to load ${state}`);
+                return;
             }
-            ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
-        }
+            request.authorizationCode = authCode;
+            if (typeof request === "undefined") {
+                console.error(`Missing saved request for state (${state})`, "oauth");
+                return false;
+            }
+            // Lav et POST request for at få token
+            if (this.config.token_url) { // Assert true
+                let postData = `grant_type=authorization_code`;
+                postData += `&client_id=${this.config.client_id}`;
+                postData += `&client_secret=${this.config.client_secret}`;
+                postData += `&redirect_uri=${this.config.redirect_uri}`;
+                postData += `&code=${authCode}`;
+                postData += `&code_verifier=${request.codeVerifier}`;
+                let me = this;
+                let config = {
+                    method: USE_GET ? "GET" : "POST",
+                    formEncoded: !USE_GET,
+                    success(d) {
+                        var response = JSON.parse(d);
+                        if (request) {
+                            request.accessToken = response;
+                        }
+                        me.accessToken = response;
+                        me.store();
+                        resolve(response);
+                    }
+                };
+                if (!USE_GET) {
+                    config.data = postData;
+                }
+                ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
+            }
+        });
     }
     getAccessToken() {
         if (!this.accessToken.access_token) {
-            this.accessToken = this.findLatestAccessToken();
+            let tmp = this.findLatestAccessToken();
+            if (tmp !== null) {
+                this.accessToken = tmp;
+            }
         }
-        return this.accessToken.access_token || undefined;
+        return this.accessToken.access_token || false;
+    }
+    hasRefreshToken() {
+        log.warn("hasRefreshToken() not implemented yet", "oauth");
+        return false;
+    }
+    refreshToken() {
+        log.warn("refreshToken() not implemented yet", "oauth");
+        return new Promise((resolve, reject) => {
+            var uri = this.config.token_url;
+            if (typeof uri === "undefined") {
+                reject(false);
+                return;
+            }
+            ajax(uri, {
+                run: (resp) => {
+                    resolve(resp);
+                }
+            });
+            reject(false);
+        });
     }
     findLatestAccessToken() {
-        return this.requests.reverse().find((v) => typeof v.accessToken !== "undefined" && v.accessToken.access_token !== "").map((v) => v.accessToken);
+        let accessToken;
+        for (let i = this.requests.length - 1; i >= 0; i--) {
+            accessToken = this.requests[i].accessToken;
+            if (typeof accessToken !== "undefined" && accessToken.access_token !== "") {
+                return accessToken;
+            }
+        }
+        return null;
     }
     parseHashstring(hashstring) {
         const keys = ["code", "state"];
@@ -127,7 +215,7 @@ class OAuthClient {
         return r;
     }
     loadRequest(stateId) {
-        return this.requests.find((value) => value.state === stateId);
+        return this.requests.find((value) => value.state === stateId) || null;
     }
 }
-export default OAuthClient;
+// export default OAuthClient;

@@ -1,8 +1,9 @@
+"use strict";
 /** wwApp ajax module ; 22.08.2021 12:30 MD
 * COPYRIGHT (C) 2021, AUTONIK AB
 * SOURCE	;
 */
-export default function ajax(url, setup = {}) {
+function ajax(url, setup = {}) {
     var xhr = new XMLHttpRequest();
     var method = setup.method || "GET";
     var data = data2str(setup.data || '');
@@ -14,7 +15,7 @@ export default function ajax(url, setup = {}) {
     }
     xhr.open(method, url);
     if (setup.formEncoded) {
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     }
     if (typeof setup.headers === "object") {
         for (var key in setup.headers) {
@@ -50,7 +51,7 @@ export default function ajax(url, setup = {}) {
         }
     };
     try {
-        xhr.send(data.substr(0, 1) !== "?" ? data : null);
+        xhr.send(setup.method === "POST" ? data : null);
     }
     catch (e) {
         console.error("Der skete en fejl med send():\n" + JSON.stringify(e));
