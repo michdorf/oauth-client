@@ -373,8 +373,9 @@ if (confirm("Er du klar?")) {
         setTimeout(() => {
             let accessToken = a.getAccessToken();
             console.log(accessToken);
-            ajax(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php?access_token=${accessToken}`, {
-                /* headers: {"Authorization": "Bearer " + accessToken}, */
+            ajax(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php`, {
+                headers: { "Authorization": "Bearer " + accessToken },
+                method: "POST",
                 run(data) {
                     console.log("Du har ressourcen: ", data);
                 }
