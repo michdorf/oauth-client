@@ -137,6 +137,13 @@ function randomString(length, characters) {
 }
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
+if (typeof log === "undefined") {
+    log = {
+        warn(txt, appzone) {
+            console.warn(`${txt} [${appzone}]`);
+        }
+    };
+}
 class OAuthClient {
     constructor(config) {
         this.requests = [];

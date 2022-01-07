@@ -5,6 +5,14 @@
 /// <reference path="randomstr.ts" />
 declare let log: any
 
+if (typeof log === "undefined") {
+    log = {
+        warn(txt: string, appzone: string) {
+            console.warn(`${txt} [${appzone}]`);
+        }
+    }
+}
+
 interface Configuration {
     authorization_url: string;
     token_url?: string;
