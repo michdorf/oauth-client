@@ -3,31 +3,36 @@ import OAuthClient from "./oauthclient"; */
 /// <reference path="./ajax.ts" />
 /// <reference path="./oauthclient.ts" />
 
-var a = new OAuthClient({
-    authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",
-    token_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/token.php",
-    client_id: "localvue",
-    client_secret: "enlang9923123",
-    redirect_uri: "http://localhost:8080/test/index.htm"
-});
+// Example
+declare const OAUTHCLIENT_RUN_EXAMPLE: boolean | undefined;
 
-if (confirm("Er du klar?")) {
-    debugger;
-    if (window.location.hash.indexOf("code=") !== -1 || window.location.search.indexOf("code=") !== -1) {
-        a.exchangeAuthCode();
-        setTimeout(()=>{
-            let accessToken = a.getAccessToken();
-            console.log(accessToken);
+if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) {
+    var a = new OAuthClient({
+        authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",
+        token_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/token.php",
+        client_id: "localvue",
+        client_secret: "enlang9923123",
+        redirect_uri: "http://localhost:8080/test/index.htm"
+    });
 
-            ajax(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php`, {
-                headers: {"Authorization": "Bearer " + accessToken},
-                method: "POST",
-                run(data) {
-                    console.log("Du har ressourcen: ", data);
-                }
-            });
-        }, 3000);
-    }else {
-        a.authorizationCode("testscope");
+    if (confirm("Er du klar?")) {
+        debugger;
+        if (window.location.hash.indexOf("code=") !== -1 || window.location.search.indexOf("code=") !== -1) {
+            a.exchangeAuthCode();
+            setTimeout(()=>{
+                let accessToken = a.getAccessToken();
+                console.log(accessToken);
+
+                ajax(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php`, {
+                    headers: {"Authorization": "Bearer " + accessToken},
+                    method: "POST",
+                    run(data) {
+                        console.log("Du har ressourcen: ", data);
+                    }
+                });
+            }, 3000);
+        }else {
+            a.authorizationCode("testscope");
+        }
     }
 }

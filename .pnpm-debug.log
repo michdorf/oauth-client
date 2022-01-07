@@ -15,7 +15,7 @@
       "name": "pnpm",
       "message": "oauth-client@1.0.0 build: `rimraf dist && tsc && rollup -c rollup.config.js`\nspawn ENOENT",
       "code": "ELIFECYCLE",
-      "stack": "pnpm: oauth-client@1.0.0 build: `rimraf dist && tsc && rollup -c rollup.config.js`\nspawn ENOENT\n    at ChildProcess.<anonymous> (/Users/michele/.npm/pnpm-global/5/node_modules/.pnpm/pnpm@6.19.1/node_modules/pnpm/dist/pnpm.cjs:92977:22)\n    at ChildProcess.emit (events.js:400:28)\n    at maybeClose (internal/child_process.js:1055:16)\n    at Process.ChildProcess._handle.onexit (internal/child_process.js:288:5)"
+      "stack": "pnpm: oauth-client@1.0.0 build: `rimraf dist && tsc && rollup -c rollup.config.js`\nspawn ENOENT\n    at ChildProcess.<anonymous> (/Users/michele/.npm/pnpm-global/5/node_modules/.pnpm/pnpm@6.23.2/node_modules/pnpm/dist/pnpm.cjs:91354:22)\n    at ChildProcess.emit (events.js:400:28)\n    at maybeClose (internal/child_process.js:1055:16)\n    at Process.ChildProcess._handle.onexit (internal/child_process.js:288:5)"
     }
   },
   "2 warn pnpm:global": " Local package.json exists, but node_modules missing, did you mean to install?"
