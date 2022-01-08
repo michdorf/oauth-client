@@ -249,8 +249,11 @@ class OAuthClient {
     }
 
     refreshToken(): Promise<string> {
-        let refresh_token: string = this.getRefreshToken();
+        let refresh_token = this.getRefreshToken();
         return new Promise((resolve, reject) => {
+            if (refresh_token === null) {
+                reject("Could not get refresh token");
+            }
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
                 reject("uri not defined for oauth client");

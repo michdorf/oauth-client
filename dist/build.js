@@ -306,32 +306,45 @@ class OAuthClient {
         });
     }
     getAccessToken() {
+        var _a;
+        return ((_a = this.getAccessTokenObject()) === null || _a === void 0 ? void 0 : _a.access_token) || false;
+    }
+    getAccessTokenObject() {
         if (!this.accessToken.access_token) {
             let tmp = this.findLatestAccessToken();
             if (tmp !== null) {
                 this.accessToken = tmp;
             }
         }
-        return this.accessToken.access_token || false;
+        return this.accessToken || null;
+    }
+    getRefreshToken() {
+        let access_token = this.getAccessTokenObject();
+        return (access_token === null || access_token === void 0 ? void 0 : access_token.refresh_token) || null;
     }
     hasRefreshToken() {
-        log.warn("hasRefreshToken() not implemented yet", "oauth");
-        return false;
+        return !!this.getRefreshToken();
     }
     refreshToken() {
-        log.warn("refreshToken() not implemented yet", "oauth");
+        let refresh_token = this.getRefreshToken();
         return new Promise((resolve, reject) => {
+            if (refresh_token === null) {
+                reject("Could not get refresh token");
+            }
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
-                reject(false);
+                reject("uri not defined for oauth client");
                 return;
             }
             ajax(uri, {
+                method: "POST",
+                data: "grant_type=refresh_token&refresh_token=" + refresh_token,
+                formEncoded: true,
                 run: (resp) => {
                     resolve(resp);
-                }
+                },
+                error: reject
             });
-            reject(false);
         });
     }
     findLatestAccessToken() {
