@@ -226,6 +226,10 @@ class OAuthClient {
     }
 
     getAccessToken(): string | false {
+        return this.getAccessTokenObject()?.access_token || false;
+    }
+
+    getAccessTokenObject(): AccessToken | null {
         if (!this.accessToken.access_token) {
             let tmp = this.findLatestAccessToken();
             if (tmp !== null) {
@@ -233,28 +237,34 @@ class OAuthClient {
             }
         }
 
-        return this.accessToken.access_token || false;
+        return this.accessToken || null;
     }
 
+    getRefreshToken(): string | null {
+        let access_token = this.getAccessTokenObject();
+        return access_token?.refresh_token || null;
+    }
     hasRefreshToken(): boolean {
-        log.warn("hasRefreshToken() not implemented yet", "oauth");
-        return false;
+        return !!this.getRefreshToken();
     }
 
     refreshToken(): Promise<string> {
-        log.warn("refreshToken() not implemented yet", "oauth");
+        let refresh_token: string = this.getRefreshToken();
         return new Promise((resolve, reject) => {
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
-                reject(false);
+                reject("uri not defined for oauth client");
                 return;
             }
             ajax(uri, {
+                method: "POST",
+                data: "grant_type=refresh_token&refresh_token=" + refresh_token,
+                formEncoded:true,
                 run: (resp: string) => {
                     resolve(resp);
-                }
+                },
+                error: reject
             });
-            reject(false);
         });
     }
 
