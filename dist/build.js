@@ -326,11 +326,14 @@ class OAuthClient {
         return !!this.getRefreshToken();
     }
     refreshToken() {
-        let refresh_token = this.getRefreshToken();
         return new Promise((resolve, reject) => {
-            if (refresh_token === null) {
+            var _a;
+            let request = this.getLastReqWithRefreshToken();
+            if (request === null) {
                 reject("Could not get refresh token");
+                return;
             }
+            let refresh_token = (_a = request.accessToken) === null || _a === void 0 ? void 0 : _a.refresh_token;
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
                 reject("uri not defined for oauth client");
@@ -338,14 +341,27 @@ class OAuthClient {
             }
             ajax(uri, {
                 method: "POST",
-                data: "grant_type=refresh_token&refresh_token=" + refresh_token,
+                data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
                 formEncoded: true,
                 run: (resp) => {
+                    // Update the existing request with new values
+                    request = request;
+                    request.accessToken = Object.assign(request.accessToken, resp);
                     resolve(resp);
                 },
                 error: reject
             });
         });
+    }
+    getLastReqWithRefreshToken() {
+        let accessToken;
+        for (let i = this.requests.length - 1; i >= 0; i--) {
+            accessToken = this.requests[i].accessToken;
+            if (typeof accessToken !== "undefined" && accessToken.refresh_token !== "") {
+                return this.requests[i];
+            }
+        }
+        return null;
     }
     findLatestAccessToken() {
         let accessToken;
