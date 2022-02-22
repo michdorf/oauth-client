@@ -137,6 +137,13 @@ function randomString(length, characters) {
 }
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
+if (typeof log === "undefined") {
+    log = {
+        warn(txt, appzone) {
+            console.warn(`${txt} [${appzone}]`);
+        }
+    };
+}
 class OAuthClient {
     constructor(config) {
         this.requests = [];
@@ -299,33 +306,62 @@ class OAuthClient {
         });
     }
     getAccessToken() {
+        var _a;
+        return ((_a = this.getAccessTokenObject()) === null || _a === void 0 ? void 0 : _a.access_token) || false;
+    }
+    getAccessTokenObject() {
         if (!this.accessToken.access_token) {
             let tmp = this.findLatestAccessToken();
             if (tmp !== null) {
                 this.accessToken = tmp;
             }
         }
-        return this.accessToken.access_token || false;
+        return this.accessToken || null;
+    }
+    getRefreshToken() {
+        let access_token = this.getAccessTokenObject();
+        return (access_token === null || access_token === void 0 ? void 0 : access_token.refresh_token) || null;
     }
     hasRefreshToken() {
-        log.warn("hasRefreshToken() not implemented yet", "oauth");
-        return false;
+        return !!this.getRefreshToken();
     }
     refreshToken() {
-        log.warn("refreshToken() not implemented yet", "oauth");
         return new Promise((resolve, reject) => {
+            var _a;
+            let request = this.getLastReqWithRefreshToken();
+            if (request === null) {
+                reject("Could not get refresh token");
+                return;
+            }
+            let refresh_token = (_a = request.accessToken) === null || _a === void 0 ? void 0 : _a.refresh_token;
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
-                reject(false);
+                reject("uri not defined for oauth client");
                 return;
             }
             ajax(uri, {
+                method: "POST",
+                data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
+                formEncoded: true,
                 run: (resp) => {
+                    // Update the existing request with new values
+                    request = request;
+                    request.accessToken = Object.assign(request.accessToken, resp);
                     resolve(resp);
-                }
+                },
+                error: reject
             });
-            reject(false);
         });
+    }
+    getLastReqWithRefreshToken() {
+        let accessToken;
+        for (let i = this.requests.length - 1; i >= 0; i--) {
+            accessToken = this.requests[i].accessToken;
+            if (typeof accessToken !== "undefined" && accessToken.refresh_token !== "") {
+                return this.requests[i];
+            }
+        }
+        return null;
     }
     findLatestAccessToken() {
         let accessToken;

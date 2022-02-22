@@ -5,6 +5,14 @@
 /// <reference path="randomstr.ts" />
 declare let log: any
 
+if (typeof log === "undefined") {
+    log = {
+        warn(txt: string, appzone: string) {
+            console.warn(`${txt} [${appzone}]`);
+        }
+    }
+}
+
 interface Configuration {
     authorization_url: string;
     token_url?: string;
@@ -27,7 +35,7 @@ interface AccessToken {
     expires_in: number;
     token_type: "Bearer" | string;
     scope: string;
-    refresh_token: string;
+    refresh_token?: string;
 }
 
 class OAuthClient {
@@ -218,6 +226,10 @@ class OAuthClient {
     }
 
     getAccessToken(): string | false {
+        return this.getAccessTokenObject()?.access_token || false;
+    }
+
+    getAccessTokenObject(): AccessToken | null {
         if (!this.accessToken.access_token) {
             let tmp = this.findLatestAccessToken();
             if (tmp !== null) {
@@ -225,29 +237,56 @@ class OAuthClient {
             }
         }
 
-        return this.accessToken.access_token || false;
+        return this.accessToken || null;
     }
 
+    getRefreshToken(): string | null {
+        let access_token = this.getAccessTokenObject();
+        return access_token?.refresh_token || null;
+    }
     hasRefreshToken(): boolean {
-        log.warn("hasRefreshToken() not implemented yet", "oauth");
-        return false;
+        return !!this.getRefreshToken();
     }
 
-    refreshToken(): Promise<string> {
-        log.warn("refreshToken() not implemented yet", "oauth");
+    refreshToken(): Promise<AccessToken> {
         return new Promise((resolve, reject) => {
+            let request = this.getLastReqWithRefreshToken();
+            if (request === null) {
+                reject("Could not get refresh token");
+                return;
+            }
+            let refresh_token = request.accessToken?.refresh_token;
             var uri = this.config.token_url;
             if (typeof uri === "undefined") {
-                reject(false);
+                reject("uri not defined for oauth client");
                 return;
             }
             ajax(uri, {
-                run: (resp: string) => {
+                method: "POST",
+                data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
+                formEncoded:true,
+                run: (resp: AccessToken) => {
+                    // Update the existing request with new values
+                    request = request as OAuth2Request;
+                    request.accessToken = Object.assign(request.accessToken, resp);
+                    
                     resolve(resp);
-                }
+                },
+                error: reject
             });
-            reject(false);
         });
+    }
+
+    getLastReqWithRefreshToken(): OAuth2Request | null {
+        let accessToken: AccessToken | undefined;
+        for (let i = this.requests.length - 1; i >= 0; i--) {
+            accessToken = this.requests[i].accessToken;
+            if (typeof accessToken !== "undefined" && accessToken.refresh_token !== "") {
+                return this.requests[i];
+            }
+        }
+
+        return null;
     }
 
     findLatestAccessToken(): AccessToken | null {
