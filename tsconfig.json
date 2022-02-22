@@ -9,7 +9,7 @@
     "strict": true,  
     "esModuleInterop": false,                 
     "outDir": "out-tsc",
-    "rootDir": "./"
+    "rootDir": "./src/"
   }
   ,
   "include": ["./src/**/*.ts"]
