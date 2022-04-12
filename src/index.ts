@@ -1,5 +1,5 @@
-/* import ajax from "./ajax";
-import OAuthClient from "./oauthclient"; */
+import ajax from "moduli/moduli/ajax";
+import OAuthClient from "./oauthclient";
 /// <reference path="./ajax.ts" />
 /// <reference path="./oauthclient.ts" />
 

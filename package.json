@@ -17,6 +17,7 @@
     "typescript": "^4.4.3"
   },
   "dependencies": {
-    "base64-arraybuffer": "^1.0.1"
+    "base64-arraybuffer": "^1.0.1",
+    "moduli": "github:michdorf/moduli"
   }
 }

@@ -1,17 +1,8 @@
-// import randomString from './randomstr'
-// import generateCodeChallenge from './codeverifier'
-// import ajax, {Setup} from '../ajax'
+import randomString from './randomstr'
+import generateCodeChallenge from './codeverifier'
+import ajax, {Setup} from 'moduli/moduli/ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
-declare let log: any
-
-if (typeof log === "undefined") {
-    log = {
-        warn(txt: string, appzone: string) {
-            console.warn(`${txt} [${appzone}]`);
-        }
-    }
-}
 
 interface Configuration {
     authorization_url: string;
@@ -38,7 +29,7 @@ interface AccessToken {
     refresh_token?: string;
 }
 
-class OAuthClient {
+export default class OAuthClient {
     private config: Configuration;
     private requests: OAuth2Request[] = [];
     private storageKey = "ab-oauth-requests";
