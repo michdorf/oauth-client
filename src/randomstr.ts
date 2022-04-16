@@ -1,4 +1,4 @@
-export default function randomString(length?: number, characters?: string): string {
+/* export default */function randomString(length?: number, characters?: string): string {
     length = length === undefined ? 32 : length;
     characters = characters === undefined ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' : characters;
 

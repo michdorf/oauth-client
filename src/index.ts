@@ -1,5 +1,5 @@
-import ajax from "moduli/moduli/ajax";
-import OAuthClient from "./oauthclient";
+// import ajax from "moduli/moduli/ajax";
+// import OAuthClient from "./oauthclient";
 /// <reference path="./ajax.ts" />
 /// <reference path="./oauthclient.ts" />
 
@@ -10,7 +10,7 @@ if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) 
     var a = new OAuthClient({
         authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",
         token_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/token.php",
-        client_id: "localvue",
+        client_id: "aclient",
         client_secret: "enlang9923123",
         redirect_uri: "http://localhost:8080/test/index.htm"
     });
