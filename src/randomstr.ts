@@ -5,7 +5,7 @@ export default function randomString(length?: number, characters?: string): stri
     var maxIndex = characters.length - 1;
     var string = '';
 
-    if (window && "crypto" in window) {
+    if (typeof window !== "undefined" && "crypto" in window) {
         var array = new Uint8Array(length);
         window.crypto.getRandomValues(array);
         return btoa(array.join(""));
