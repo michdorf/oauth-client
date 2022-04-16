@@ -1,50 +1,26 @@
 /** wwApp ajax module ; 22.08.2021 12:30 MD
 * COPYRIGHT (C) 2021, AUTONIK AB
-* SOURCE	; 
+* SOURCE	;
 */
-
-export interface Setup {
-    method?: "GET" | "POST";
-    data?: Data | string;
-    withCredentials?: boolean;
-    headers?: ObjOfStrings;
-    success?: (response: any, request: XMLHttpRequest) => void;
-    run?: (response: any) => void;
-    complete?: () => void;
-    error?: (error: string, xhr: XMLHttpRequest) => void;
-    formEncoded?: boolean;
-}
-
-interface Data {
-    [key: string]: string | object;
-}
-type ObjOfStrings = {
-    [key: string]: string;
-}
-
-export default function ajax(url: string, setup: Setup = {}) {
+export default function ajax(url, setup = {}) {
     var xhr = new XMLHttpRequest();
     var method = setup.method || "GET";
     var data = data2str(setup.data || '');
     if ('cache' in xhr) {
-        (xhr as any).cache = false; // For IE
+        xhr.cache = false; // For IE
     }
     if (typeof setup.withCredentials !== "undefined") {
         xhr.withCredentials = !!setup.withCredentials;
     }
-
     xhr.open(method, url);
-    
     if (setup.formEncoded) {
         xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     }
-
     if (typeof setup.headers === "object") {
         for (var key in setup.headers) {
             xhr.setRequestHeader(key, setup.headers[key]);
         }
     }
-
     xhr.onreadystatechange = function (e) {
         if (xhr.readyState === 4) {
             if (xhr.status === 200) {
@@ -58,7 +34,8 @@ export default function ajax(url: string, setup: Setup = {}) {
                 if (typeof setup.complete === "function") {
                     setup.complete();
                 }
-            } else {
+            }
+            else {
                 funz(setup.error, ajax_handle_error, [xhr.status, xhr]);
                 if (typeof setup.complete === "function") {
                     setup.complete();
@@ -66,22 +43,20 @@ export default function ajax(url: string, setup: Setup = {}) {
             }
         }
     };
-
     xhr.onerror = function (e) {
         funz(setup.error, ajax_handle_error, [xhr.status, xhr]);
         if (typeof setup.complete === "function") {
             setup.complete();
         }
     };
-
     try {
         xhr.send(setup.method === "POST" ? data : null);
-    } catch (e) {
+    }
+    catch (e) {
         console.error("Der skete en fejl med send():\n" + JSON.stringify(e));
     }
 }
-
-function data2str(data: Data | string) {
+function data2str(data) {
     if (typeof data === "string") {
         return data;
     }
@@ -92,12 +67,10 @@ function data2str(data: Data | string) {
         }
         r += "&" + k + "=" + data[k];
     }
-
     return r.substr(1);
 }
-
 let ajax_503_warned = false; // Wether the user has been noticed about "Service Unavailable"
-function ajax_handle_error(status_code: number, req: XMLHttpRequest) {
+function ajax_handle_error(status_code, req) {
     // status_code 503 = "Service Unavailable"
     if (status_code == 503 && !ajax_503_warned) {
         alert("Service Unavailable.\nIt seems like too many licenses are in use");
@@ -105,11 +78,11 @@ function ajax_handle_error(status_code: number, req: XMLHttpRequest) {
     }
     console.error("Fejl i ajax laredo login.js\nStatus code: " + status_code, req);
 }
-
-function funz(func: Function | undefined, fallback: Function, args?: Array<any>) {
+function funz(func, fallback, args) {
     if (typeof func === "function") {
         func.apply(null, args);
-    } else {
+    }
+    else {
         fallback.apply(null, args);
     }
 }

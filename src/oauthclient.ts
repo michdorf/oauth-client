@@ -1,6 +1,6 @@
-// import randomString from './randomstr'
-// import generateCodeChallenge from './codeverifier'
-// import ajax, {Setup} from 'moduli/moduli/ajax'
+import randomString from './randomstr'
+import generateCodeChallenge from './codeverifier'
+import ajax, {Setup} from 'moduli/moduli/ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
 
@@ -313,4 +313,4 @@ interface AccessToken {
     }
 }
 
-// export default OAuthClient;
+export default OAuthClient;
