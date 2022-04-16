@@ -4,14 +4,14 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "./randomstr", "./codeverifier", "moduli/moduli/ajax"], factory);
+        define(["require", "exports", "./randomstr", "./codeverifier", "./ajax"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const randomstr_1 = require("./randomstr");
     const codeverifier_1 = require("./codeverifier");
-    const ajax_1 = require("moduli/moduli/ajax");
+    const ajax_1 = require("./ajax");
     class OAuthClient {
         constructor(config) {
             this.requests = [];
@@ -60,10 +60,10 @@
          */
         authorizationCode(scopes, usePCKE) {
             usePCKE = typeof usePCKE === "undefined" ? true : !!usePCKE;
-            const stateId = randomstr_1.default(16);
+            const stateId = (0, randomstr_1.default)(16);
             scopes = encodeURIComponent(scopes);
             let redirectUri = encodeURIComponent(this.config.redirect_uri || "");
-            const codeVerifier = usePCKE ? randomstr_1.default() : "";
+            const codeVerifier = usePCKE ? (0, randomstr_1.default)() : "";
             this.requests.push({
                 type: 'code',
                 state: stateId,
@@ -71,7 +71,7 @@
                 codeVerifier: codeVerifier
             });
             this.store();
-            codeverifier_1.default(codeVerifier).then((codeChallenge) => {
+            (0, codeverifier_1.default)(codeVerifier).then((codeChallenge) => {
                 let endpoint = `${this.config.authorization_url}?`;
                 endpoint += `response_type=code`;
                 endpoint += `&client_id=${this.config.client_id}`;
@@ -86,7 +86,7 @@
             });
         }
         clientCredentials(scopes, headers) {
-            const stateID = randomstr_1.default(12);
+            const stateID = (0, randomstr_1.default)(12);
             this.requests.push({
                 type: 'client_credentials',
                 state: stateID,
@@ -124,7 +124,7 @@
                     ajaxConfig.headers = headers;
                 }
                 let me = this;
-                ajax_1.default(this.token_url, ajaxConfig);
+                (0, ajax_1.default)(this.token_url, ajaxConfig);
             });
         }
         exchangeAuthCode(hashstring) {
@@ -169,7 +169,7 @@
                     if (!USE_GET) {
                         config.data = postData;
                     }
-                    ajax_1.default(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
+                    (0, ajax_1.default)(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
                 }
             });
         }
@@ -207,7 +207,7 @@
                     reject("uri not defined for oauth client");
                     return;
                 }
-                ajax_1.default(uri, {
+                (0, ajax_1.default)(uri, {
                     method: "POST",
                     data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
                     formEncoded: true,

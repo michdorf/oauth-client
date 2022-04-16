@@ -1,6 +1,6 @@
 import randomString from './randomstr'
 import generateCodeChallenge from './codeverifier'
-import ajax, {Setup} from 'moduli/moduli/ajax'
+import ajax, {Setup} from './ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
 

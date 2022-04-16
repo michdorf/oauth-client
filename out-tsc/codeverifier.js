@@ -20,7 +20,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     Object.defineProperty(exports, "__esModule", { value: true });
     /* https://www.valentinog.com/blog/challenge/ */
     const randomstr_1 = require("./randomstr");
-    const code_verifier = randomstr_1.default(128);
+    const code_verifier = (0, randomstr_1.default)(128);
     function sha256(plain) {
         // returns promise ArrayBuffer
         const encoder = new TextEncoder();

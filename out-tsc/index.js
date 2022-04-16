@@ -4,12 +4,12 @@
         if (v !== undefined) module.exports = v;
     }
     else if (typeof define === "function" && define.amd) {
-        define(["require", "exports", "moduli/moduli/ajax", "./oauthclient"], factory);
+        define(["require", "exports", "./ajax", "./oauthclient"], factory);
     }
 })(function (require, exports) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    const ajax_1 = require("moduli/moduli/ajax");
+    const ajax_1 = require("./ajax");
     const oauthclient_1 = require("./oauthclient");
     if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) {
         var a = new oauthclient_1.default({
@@ -26,7 +26,7 @@
                 setTimeout(() => {
                     let accessToken = a.getAccessToken();
                     console.log(accessToken);
-                    ajax_1.default(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php`, {
+                    (0, ajax_1.default)(`https://dechiffre.dk/oauth2-demo-php/my-oauth2/resource.php`, {
                         headers: { "Authorization": "Bearer " + accessToken },
                         method: "POST",
                         run(data) {
