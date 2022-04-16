@@ -29,7 +29,7 @@ interface AccessToken {
     refresh_token?: string;
 }
 
-/*export default */class OAuthClient {
+export default class OAuthClient {
     private config: Configuration;
     private requests: OAuth2Request[] = [];
     private storageKey = "ab-oauth-requests";
