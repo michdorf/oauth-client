@@ -3,7 +3,7 @@
 * SOURCE	; 
 */
 
-export interface Setup {
+/* export  */interface Setup {
     method?: "GET" | "POST";
     data?: Data | string;
     withCredentials?: boolean;
@@ -22,7 +22,7 @@ type ObjOfStrings = {
     [key: string]: string;
 }
 
-export default function ajax(url: string, setup: Setup = {}) {
+/* export default  */function ajax(url: string, setup: Setup = {}) {
     var xhr = new XMLHttpRequest();
     var method = setup.method || "GET";
     var data = data2str(setup.data || '');

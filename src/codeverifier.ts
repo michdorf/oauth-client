@@ -1,5 +1,5 @@
 /* https://www.valentinog.com/blog/challenge/ */
-import randomString from "./randomstr";
+// import randomString from "./randomstr";
 
 const code_verifier = randomString(128);
 
@@ -19,7 +19,7 @@ function base64urlencode(a: ArrayBuffer) {
       .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export default async function generateCodeChallenge(v: string) {
+/* export default  */async function generateCodeChallenge(v: string) {
   const hashed = await sha256(v);
   const base64encoded = base64urlencode(hashed);
   return base64encoded;

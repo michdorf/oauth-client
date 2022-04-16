@@ -1,6 +1,6 @@
-import randomString from './randomstr'
-import generateCodeChallenge from './codeverifier'
-import ajax, {Setup} from './ajax'
+// import randomString from './randomstr'
+// import generateCodeChallenge from './codeverifier'
+// import ajax, {Setup} from './ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
 
@@ -29,7 +29,7 @@ interface AccessToken {
     refresh_token?: string;
 }
 
-export default class OAuthClient {
+/* export default  */class OAuthClient {
     private config: Configuration;
     private requests: OAuth2Request[] = [];
     private storageKey = "ab-oauth-requests";
