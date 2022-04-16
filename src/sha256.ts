@@ -120,5 +120,3 @@ export default function SHA256(s: string) {
     s = Utf8Encode(s);
     return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
 }
-
-export default SHA256;

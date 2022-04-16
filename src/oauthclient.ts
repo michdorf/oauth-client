@@ -312,5 +312,3 @@ export default class OAuthClient {
         return this.requests.find((value: OAuth2Request) => value.state === stateId) || null;
     }
 }
-
-export default OAuthClient;
