@@ -1,8 +1,5 @@
-"use strict";
-// import ajax from "./ajax";
-// import OAuthClient from "./oauthclient";
-/// <reference path="./ajax.ts" />
-/// <reference path="./oauthclient.ts" />
+import ajax from "./ajax";
+import OAuthClient from "./oauthclient";
 if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) {
     var a = new OAuthClient({
         authorization_url: "https://dechiffre.dk/oauth2-demo-php/my-oauth2/authorize.php",

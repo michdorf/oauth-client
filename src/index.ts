@@ -1,7 +1,7 @@
-// import ajax from "./ajax";
-// import OAuthClient from "./oauthclient";
-/// <reference path="./ajax.ts" />
-/// <reference path="./oauthclient.ts" />
+import ajax from "./ajax";
+import OAuthClient from "./oauthclient";
+//// <reference path="./ajax.ts" />
+//// <reference path="./oauthclient.ts" />
 
 // Example
 declare const OAUTHCLIENT_RUN_EXAMPLE: boolean | undefined;

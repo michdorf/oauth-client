@@ -1,10 +1,9 @@
-"use strict";
 /**
 * Secure Hash Algorithm (SHA256)
 * http://www.webtoolkit.info/
 * Original code by Angel Marin, Paul Johnston
 **/
-/* export default  */ function SHA256(s) {
+export default function SHA256(s) {
     var chrsz = 8;
     var hexcase = 0;
     function safe_add(x, y) {

@@ -1,15 +1,15 @@
 {
   "compilerOptions": {
     "target": "es2015",                          
-    "module": "amd",
+    "module": "esnext",
     "moduleResolution": "node",                     
     "noEmitOnError": true,
-    "outFile": "./dist/build.js",
+    // "outFile": "./dist/build.js",
     "lib": ["es2017", "DOM"],                            
     "strict": true,  
     "esModuleInterop": false,        
     "declaration": true,         
-    /* "outDir": "out-tsc", */
+    "outDir": "out-tsc",
     "rootDir": "./src/"
   }
   ,

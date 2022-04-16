@@ -1,9 +1,8 @@
-"use strict";
 /** wwApp ajax module ; 22.08.2021 12:30 MD
 * COPYRIGHT (C) 2021, AUTONIK AB
 * SOURCE	;
 */
-/* export default  */ function ajax(url, setup = {}) {
+export default function ajax(url, setup = {}) {
     var xhr = new XMLHttpRequest();
     var method = setup.method || "GET";
     var data = data2str(setup.data || '');

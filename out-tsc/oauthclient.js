@@ -1,10 +1,7 @@
-"use strict";
-// import randomString from './randomstr'
-// import generateCodeChallenge from './codeverifier'
-// import ajax, {Setup} from './ajax'
-/// <reference path="codeverifier.ts" />
-/// <reference path="randomstr.ts" />
-/* export default  */ class OAuthClient {
+import randomString from './randomstr';
+import generateCodeChallenge from './codeverifier';
+import ajax from './ajax';
+export default class OAuthClient {
     constructor(config) {
         this.requests = [];
         this.storageKey = "ab-oauth-requests";

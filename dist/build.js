@@ -97,7 +97,7 @@ function funz(func, fallback, args) {
     }
 }
 /* https://www.valentinog.com/blog/challenge/ */
-// import randomString from "./randomstr";
+import randomString from "./randomstr";
 const code_verifier = randomString(128);
 function sha256(plain) {
     // returns promise ArrayBuffer
@@ -135,9 +135,9 @@ function base64urlencode(a) {
     }
     return string;
 }
-// import randomString from './randomstr'
-// import generateCodeChallenge from './codeverifier'
-// import ajax, {Setup} from './ajax'
+import randomString from './randomstr'
+import generateCodeChallenge from './codeverifier'
+import ajax, {Setup} from './ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
 /* export default  */ class OAuthClient {
@@ -386,8 +386,8 @@ function base64urlencode(a) {
         return this.requests.find((value) => value.state === stateId) || null;
     }
 }
-// import ajax from "./ajax";
-// import OAuthClient from "./oauthclient";
+import ajax from "./ajax";
+import OAuthClient from "./oauthclient";
 /// <reference path="./ajax.ts" />
 /// <reference path="./oauthclient.ts" />
 if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) {

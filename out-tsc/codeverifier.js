@@ -1,6 +1,3 @@
-"use strict";
-/* https://www.valentinog.com/blog/challenge/ */
-// import randomString from "./randomstr";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -10,6 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+/* https://www.valentinog.com/blog/challenge/ */
+import randomString from "./randomstr";
 const code_verifier = randomString(128);
 function sha256(plain) {
     // returns promise ArrayBuffer
@@ -25,7 +24,7 @@ function base64urlencode(a) {
     return btoa(String.fromCharCode.apply(null, new Uint8Array(a)))
         .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-/* export default  */ function generateCodeChallenge(v) {
+export default function generateCodeChallenge(v) {
     return __awaiter(this, void 0, void 0, function* () {
         const hashed = yield sha256(v);
         const base64encoded = base64urlencode(hashed);
