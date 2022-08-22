@@ -21,12 +21,16 @@ interface OAuth2Request {
     codeVerifier?: string;
 }
 
-interface AccessToken {
+interface AccessTokenResponse {
     access_token: string;
     expires_in: number;
     token_type: "Bearer" | string;
     scope: string;
     refresh_token?: string;
+}
+
+interface AccessToken extends AccessTokenResponse {
+    expires: Date /* calculated date object */
 }
 
 export default class OAuthClient {
@@ -57,7 +61,8 @@ export default class OAuthClient {
             expires_in: 0,
             refresh_token: "",
             scope: "",
-            token_type: "Bearer"
+            token_type: "Bearer",
+            expires: new Date()
         };
         this.load();
     }
@@ -72,7 +77,7 @@ export default class OAuthClient {
         }
     }
 
-    private store() {
+    private storeRequests() {
         localStorage.setItem(this.storageKey, JSON.stringify(this.requests));
     }
 
@@ -96,7 +101,7 @@ export default class OAuthClient {
             codeVerifier: codeVerifier
         });
 
-        this.store();
+        this.storeRequests();
 
         generateCodeChallenge(codeVerifier).then((codeChallenge) => {
             let endpoint = `${this.config.authorization_url}?`;
@@ -122,7 +127,7 @@ export default class OAuthClient {
             metadata: {author: "Michele de Chiffre"}
         });
 
-        this.store();
+        this.storeRequests();
 
         return new Promise((resolve, reject) => {
             if (typeof this.config.client_secret === "undefined") {
@@ -138,13 +143,13 @@ export default class OAuthClient {
                     try {
                         const parsed = JSON.parse(d) as AccessToken;
 
-                        const oauth2req = me.loadRequest(stateID);
+                        const oauth2req = me.loadRequests(stateID);
                         if (!oauth2req) {
                             reject(`Request not found for state ${stateID}`);
                             return;
                         }
                         oauth2req.accessToken = parsed;
-                        me.store();
+                        me.storeRequests();
                         resolve(parsed);
                     } catch (e) {
                         reject(`Error parsing response ${d}`);
@@ -171,7 +176,7 @@ export default class OAuthClient {
             let authCode = parsed.code;
             let state = parsed.state;
 
-            let request = this.loadRequest(state);
+            let request = this.loadRequests(state);
             if (request === null) {
                 reject(`Request not saved correctly and not possible to load ${state}`);
                 return;
@@ -192,18 +197,17 @@ export default class OAuthClient {
                 postData += `&code=${authCode}`;
                 postData += `&code_verifier=${request.codeVerifier}`;
 
-                let me = this;
-
                 let config: Setup = {
                     method: USE_GET ? "GET" : "POST",
                     formEncoded: !USE_GET,
-                    success(d: any) {
-                        var response = JSON.parse(d);
-                        if (request) {
-                            request.accessToken = response;
+                    success: (d: any) => {
+                        var response = JSON.parse(d) as AccessTokenResponse;
+                        if (request) { /* assert false */
+                            const expires = new Date(Date.now() + (response.expires_in * 1000));
+                            request.accessToken = Object.assign({expires}, response);
+                            this.accessToken = request.accessToken;
                         }
-                        me.accessToken = response;
-                        me.store();
+                        this.storeRequests();
                         resolve(response);
                     }
                 };
@@ -256,12 +260,13 @@ export default class OAuthClient {
                 method: "POST",
                 data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
                 formEncoded:true,
-                run: (resp: AccessToken) => {
+                run: (resp: AccessTokenResponse) => {
                     // Update the existing request with new values
                     request = request as OAuth2Request;
-                    request.accessToken = Object.assign(request.accessToken, resp);
+                    const expires = new Date(Date.now() + (resp.expires_in * 1000));
+                    request.accessToken = Object.assign({}, request.accessToken, resp, {expires});
                     
-                    resolve(resp);
+                    resolve(request.accessToken);
                 },
                 error: reject
             });
@@ -308,7 +313,7 @@ export default class OAuthClient {
         return r;
     }
 
-    loadRequest(stateId: string): OAuth2Request | null {
+    loadRequests(stateId: string): OAuth2Request | null {
         return this.requests.find((value: OAuth2Request) => value.state === stateId) || null;
     }
 }
