@@ -33,10 +33,29 @@ interface AccessToken extends AccessTokenResponse {
     expires: Date /* calculated date object */
 }
 
+class Stoccaggio {
+    private storageKey = "ab-oauth-requests";
+
+    setItem(valore: any) {
+        if (typeof window != "undefined") {
+            return localStorage.setItem(this.storageKey, valore);
+        }
+        return "";
+    }
+
+    getItem() {
+        if (typeof window != "undefined") {
+            return localStorage.getItem(this.storageKey);
+        }
+        return "";
+    }
+}
+let stoccaggio = new Stoccaggio();
+
 export default class OAuthClient {
     private config: Configuration;
     private requests: OAuth2Request[] = [];
-    private storageKey = "ab-oauth-requests";
+    
     private accessToken: AccessToken;
 
     get authorization_url() {
@@ -78,11 +97,11 @@ export default class OAuthClient {
     }
 
     private storeRequests() {
-        localStorage.setItem(this.storageKey, JSON.stringify(this.requests));
+        stoccaggio.setItem(JSON.stringify(this.requests));
     }
 
     private load() {
-        this.requests = JSON.parse(localStorage.getItem(this.storageKey) || "[]");
+        this.requests = JSON.parse(stoccaggio.getItem() || "[]");
     }
 
     /**
