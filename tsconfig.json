@@ -1,13 +1,14 @@
 {
   "compilerOptions": {
     "target": "es2015",                          
-    "module": "amd",
+    "module": "umd",
     "moduleResolution": "node",                     
     "noEmitOnError": true,
-    "outFile": "./dist/build.js",
+    // "outFile": "./dist/build.js",
     "lib": ["es2017", "DOM"],                            
     "strict": true,  
-    "esModuleInterop": false,                 
+    "esModuleInterop": false,        
+    "declaration": true,         
     "outDir": "out-tsc",
     "rootDir": "./src/"
   }

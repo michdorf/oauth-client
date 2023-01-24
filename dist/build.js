@@ -12,7 +12,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 * COPYRIGHT (C) 2021, AUTONIK AB
 * SOURCE	;
 */
-function ajax(url, setup = {}) {
+/* export default  */ function ajax(url, setup = {}) {
     var xhr = new XMLHttpRequest();
     var method = setup.method || "GET";
     var data = data2str(setup.data || '');
@@ -97,7 +97,7 @@ function funz(func, fallback, args) {
     }
 }
 /* https://www.valentinog.com/blog/challenge/ */
-// import randomstring from "./randomstr";
+import randomString from "./randomstr";
 const code_verifier = randomString(128);
 function sha256(plain) {
     // returns promise ArrayBuffer
@@ -113,19 +113,19 @@ function base64urlencode(a) {
     return btoa(String.fromCharCode.apply(null, new Uint8Array(a)))
         .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
-function generateCodeChallenge(v) {
+/* export default  */ function generateCodeChallenge(v) {
     return __awaiter(this, void 0, void 0, function* () {
         const hashed = yield sha256(v);
         const base64encoded = base64urlencode(hashed);
         return base64encoded;
     });
 }
-function randomString(length, characters) {
+/* export default  */ function randomString(length, characters) {
     length = length === undefined ? 32 : length;
     characters = characters === undefined ? 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' : characters;
     var maxIndex = characters.length - 1;
     var string = '';
-    if ("crypto" in window) {
+    if (typeof window !== "undefined" && "crypto" in window) {
         var array = new Uint8Array(length);
         window.crypto.getRandomValues(array);
         return btoa(array.join(""));
@@ -135,16 +135,12 @@ function randomString(length, characters) {
     }
     return string;
 }
+import randomString from './randomstr'
+import generateCodeChallenge from './codeverifier'
+import ajax, {Setup} from './ajax'
 /// <reference path="codeverifier.ts" />
 /// <reference path="randomstr.ts" />
-if (typeof log === "undefined") {
-    log = {
-        warn(txt, appzone) {
-            console.warn(`${txt} [${appzone}]`);
-        }
-    };
-}
-class OAuthClient {
+/* export default  */ class OAuthClient {
     constructor(config) {
         this.requests = [];
         this.storageKey = "ab-oauth-requests";
@@ -390,9 +386,8 @@ class OAuthClient {
         return this.requests.find((value) => value.state === stateId) || null;
     }
 }
-// export default OAuthClient;
-/* import ajax from "./ajax";
-import OAuthClient from "./oauthclient"; */
+import ajax from "./ajax";
+import OAuthClient from "./oauthclient";
 /// <reference path="./ajax.ts" />
 /// <reference path="./oauthclient.ts" />
 if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) {
@@ -429,7 +424,7 @@ if (typeof (OAUTHCLIENT_RUN_EXAMPLE) != "undefined" && OAUTHCLIENT_RUN_EXAMPLE) 
 * http://www.webtoolkit.info/
 * Original code by Angel Marin, Paul Johnston
 **/
-function SHA256(s) {
+/* export default  */ function SHA256(s) {
     var chrsz = 8;
     var hexcase = 0;
     function safe_add(x, y) {
@@ -529,4 +524,3 @@ function SHA256(s) {
     s = Utf8Encode(s);
     return binb2hex(core_sha256(str2binb(s), s.length * chrsz));
 }
-// export default SHA256;

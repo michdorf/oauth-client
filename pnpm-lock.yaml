@@ -4,12 +4,14 @@ specifiers:
   '@open-wc/building-rollup': ^1.10.0
   base64-arraybuffer: ^1.0.1
   deepmerge: ^4.2.2
+  moduli: github:michdorf/moduli
   rimraf: ^3.0.2
   rollup: ^2.58.0
   typescript: ^4.4.3
 
 dependencies:
   base64-arraybuffer: 1.0.1
+  moduli: github.com/michdorf/moduli/b55620e79347a672335c7f99d196bdbeebc8fbed
 
 devDependencies:
   '@open-wc/building-rollup': 1.10.0_rollup@2.58.0
@@ -1593,7 +1595,7 @@ packages:
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
     hasBin: true
     dependencies:
-      caniuse-lite: 1.0.30001265
+      caniuse-lite: 1.0.30001332
       electron-to-chromium: 1.3.861
       escalade: 3.1.1
       node-releases: 1.1.77
@@ -1623,8 +1625,8 @@ packages:
       tslib: 2.3.1
     dev: true
 
-  /caniuse-lite/1.0.30001265:
-    resolution: {integrity: sha512-YzBnspggWV5hep1m9Z6sZVLOt7vrju8xWooFAgN6BA5qvy98qPAPb7vNUzypFaoh2pb3vlfzbDO8tB57UPGbtw==}
+  /caniuse-lite/1.0.30001332:
+    resolution: {integrity: sha512-10T30NYOEQtN6C11YGg411yebhvpnC6Z102+B95eAsN0oB6KUs01ivE8u+G6FMIRtIrVlYXhL+LUwQ3/hXwDWw==}
     dev: true
 
   /chalk/2.4.2:
@@ -2739,3 +2741,9 @@ packages:
   /yallist/3.1.1:
     resolution: {integrity: sha512-a4UGQaWPH59mOXUYnAG2ewncQS4i4F43Tv3JoAM+s2VDAmS9NsK8GpDMLrCHPksFT7h3K6TOoUNn2pb7RoXx4g==}
     dev: true
+
+  github.com/michdorf/moduli/b55620e79347a672335c7f99d196bdbeebc8fbed:
+    resolution: {commit: b55620e79347a672335c7f99d196bdbeebc8fbed, repo: git+ssh://git@github.com/michdorf/moduli.git, type: git}
+    name: moduli
+    version: 1.0.0
+    dev: false
