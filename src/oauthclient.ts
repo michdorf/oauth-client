@@ -312,7 +312,6 @@ export default class OAuthClient {
     }
 
     findLatestAccessToken(): AccessToken | null {
-        debugger;
         let accessToken: AccessToken | undefined;
         for (let i = this.requests.length - 1; i >= 0; i--) {
             accessToken = this.requests[i].accessToken;
