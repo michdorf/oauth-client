@@ -279,11 +279,18 @@ export default class OAuthClient {
                 method: "POST",
                 data: `grant_type=refresh_token&client_id=${this.config.client_id}&client_secret=${this.config.client_secret}&refresh_token=${refresh_token}`,
                 formEncoded:true,
-                run: (resp: AccessTokenResponse) => {
+                run: (resp: string) => {
+                    let respData = JSON.parse(resp) as AccessTokenResponse;
+                    if (request === null) {
+                        reject("Fatal error in oauthclient->refreshToken. Variable request is null in ajax callback.");
+                        return;
+                    }
                     // Update the existing request with new values
-                    request = request as OAuth2Request;
-                    const expires = new Date(Date.now() + (resp.expires_in * 1000));
-                    request.accessToken = Object.assign({}, request.accessToken, resp, {expires});
+                    const defExpire = 60;
+                    const expires = new Date(Date.now() + ((respData.expires_in || defExpire) * 1000));
+                    request.accessToken = Object.assign({}, request.accessToken, respData, {expires});
+                    this.accessToken = request.accessToken;
+                    this.storeRequests();
                     
                     resolve(request.accessToken);
                 },
@@ -305,6 +312,7 @@ export default class OAuthClient {
     }
 
     findLatestAccessToken(): AccessToken | null {
+        debugger;
         let accessToken: AccessToken | undefined;
         for (let i = this.requests.length - 1; i >= 0; i--) {
             accessToken = this.requests[i].accessToken;
