@@ -5,6 +5,7 @@ import ajax, {Setup} from './ajax'
 /// <reference path="randomstr.ts" />
 
 interface Configuration {
+    storageKey: string;
     authorization_url: string;
     token_url?: string;
     client_id: string;
@@ -35,6 +36,11 @@ interface AccessToken extends AccessTokenResponse {
 
 class Stoccaggio {
     private storageKey = "ab-oauth-requests";
+    constructor(storageKey?: string) {
+        if (typeof storageKey !== "undefined") {
+            this.storageKey = storageKey;
+        }
+    }
 
     setItem(valore: any) {
         if (typeof window != "undefined") {
@@ -50,9 +56,9 @@ class Stoccaggio {
         return "";
     }
 }
-let stoccaggio = new Stoccaggio();
-
 export default class OAuthClient {
+    private stoccaggio: Stoccaggio;
+
     private config: Configuration;
     private requests: OAuth2Request[] = [];
     
@@ -71,6 +77,8 @@ export default class OAuthClient {
 
     constructor(config: Configuration) {
         this.config = config;
+        this.stoccaggio = new Stoccaggio(config.storageKey);
+
         if (!this.config.token_url) {
             this.config.token_url = this.config.authorization_url.replace("/authorize", "/token");
         }
@@ -97,11 +105,11 @@ export default class OAuthClient {
     }
 
     private storeRequests() {
-        stoccaggio.setItem(JSON.stringify(this.requests));
+        this.stoccaggio.setItem(JSON.stringify(this.requests));
     }
 
     private load() {
-        this.requests = JSON.parse(stoccaggio.getItem() || "[]");
+        this.requests = JSON.parse(this.stoccaggio.getItem() || "[]");
     }
 
     /**
