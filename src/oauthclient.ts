@@ -30,6 +30,12 @@ interface AccessTokenResponse {
     refresh_token?: string;
 }
 
+type exchangeOptions = {
+    jsonEncBody?: boolean;
+    useGet?: boolean;
+    basicAuth?: boolean;
+};
+
 interface AccessToken extends AccessTokenResponse {
     expires: Date /* calculated date object */
 }
@@ -142,7 +148,9 @@ export default class OAuthClient {
                 endpoint += `&code_challenge_method=S256`;
             }
 
-            window.location.href = endpoint;
+            if (typeof window !== "undefined") {
+                window.location.href = endpoint;
+            }
         });
     }
 
@@ -194,10 +202,11 @@ export default class OAuthClient {
         });
     }
 
-    exchangeAuthCode(hashstring?: string) {
-        const USE_GET = false;
+    
+    exchangeAuthCode(hashstring?: string, options: exchangeOptions = {}) {
+        const USE_GET = options.useGet || false;
 
-        return new Promise((resolve, reject) => {
+        return new Promise<AccessTokenResponse>((resolve, reject: (error: string, xhr?: XMLHttpRequest) => void) => {
             hashstring = hashstring || window.location.hash || window.location.search;
             let parsed = this.parseHashstring(hashstring);
             let authCode = parsed.code;
@@ -205,8 +214,16 @@ export default class OAuthClient {
 
             let request = this.loadRequests(state);
             if (request === null) {
-                reject(`Request not saved correctly and not possible to load ${state}`);
-                return;
+                if (typeof window !== 'undefined') {
+                    reject(`Request not saved correctly and not possible to load ${state}`);
+                    return;
+                } else {
+                    request = {
+                        authorizationCode: authCode,
+                        type: 'code',
+                        state: state,
+                    };
+                }
             }
             request.authorizationCode = authCode;
 
@@ -217,32 +234,57 @@ export default class OAuthClient {
 
             // Lav et POST request for at få token
             if (this.config.token_url) { // Assert true
-                let postData = `grant_type=authorization_code`;
-                postData += `&client_id=${this.config.client_id}`;
-                postData += `&client_secret=${this.config.client_secret}`;
-                postData += `&redirect_uri=${this.config.redirect_uri}`;
-                postData += `&code=${authCode}`;
-                postData += `&code_verifier=${request.codeVerifier}`;
-
-                let config: Setup = {
-                    method: USE_GET ? "GET" : "POST",
-                    formEncoded: !USE_GET,
-                    success: (d: any) => {
-                        var response = JSON.parse(d) as AccessTokenResponse;
-                        if (request) { /* assert false */
-                            const expires = new Date(Date.now() + (response.expires_in * 1000));
-                            request.accessToken = Object.assign({expires}, response);
-                            this.accessToken = request.accessToken;
-                        }
-                        this.storeRequests();
-                        resolve(response);
+                let postData = ``;
+                if (options.jsonEncBody) {
+                    postData = JSON.stringify({
+                        "grant_type" : "authorization_code",
+                        "code": encodeURIComponent(authCode),
+                        "redirect_uri" : this.config.redirect_uri
+                    });
+                } else {
+                    postData = `grant_type=authorization_code`;
+                    postData += `&client_id=${this.config.client_id}`;
+                    if (!options.basicAuth) {
+                        postData += `&client_secret=${this.config.client_secret}`;
+                        postData += `&redirect_uri=${this.config.redirect_uri}`;
                     }
-                };
-                if (!USE_GET) {
-                    config.data = postData;
+                    postData += `&code=${authCode}`;
+                    postData += `&code_verifier=${request.codeVerifier}`;
                 }
 
-                ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
+                let config: RequestInit = {
+                    method: USE_GET ? "GET" : "POST",
+                };
+                
+                let headers: {Authorization?: string, 'Content-Type'?: string} = {};
+                if (options.basicAuth) {
+                    headers['Authorization'] = 'Basic ' + btoa(this.config.client_id + ":" + this.config.client_secret);
+                }
+                if (options.jsonEncBody) {
+                    headers['Content-Type'] = 'application/json';
+                } else if (!USE_GET && !options.jsonEncBody) {
+                    headers['Content-Type'] = 'application/x-www-form-urlencoded;charset=UTF-8';
+                }
+                if (!USE_GET) {
+                    config.body = postData;
+                }
+
+                if ('Authorization' in headers || 'Content-Type' in headers) {
+                    config.headers = headers;
+                }
+                // ajax(this.config.token_url + (USE_GET ? `?${postData}` : ""), config);
+                fetch(this.config.token_url + (USE_GET ? `?${postData}` : ""), config).then(async (d) => {
+                    var response = await d.json() as AccessTokenResponse;
+                    if (request) { /* assert false */
+                        const expires = new Date(Date.now() + (response.expires_in * 1000));
+                        request.accessToken = Object.assign({expires}, response);
+                        this.accessToken = request.accessToken;
+                    }
+                    this.storeRequests();
+                    resolve(response);
+                }).catch((e) => {
+                    reject("Fetch error: " + typeof e === "string" ? e : typeof e + JSON.stringify(e));
+                });
             }
         });
     }
