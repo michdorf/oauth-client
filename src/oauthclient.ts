@@ -22,7 +22,7 @@ interface OAuth2Request {
     codeVerifier?: string;
 }
 
-interface AccessTokenResponse {
+export type AccessTokenResponse = {
     access_token: string;
     expires_in: number;
     token_type: "Bearer" | string;
@@ -112,6 +112,18 @@ export default class OAuthClient {
 
     private storeRequests() {
         this.stoccaggio.setItem(JSON.stringify(this.requests));
+    }
+
+    public registerAccessToken(state: string, access_token: AccessTokenResponse) {
+        let request = this.loadRequests(state);
+        if (request === null) {
+            console.error("Could not find request for state", state);
+            return;
+        }
+        const expires = new Date(Date.now() + (access_token.expires_in * 1000));
+        request.accessToken = Object.assign({expires}, access_token);
+        this.accessToken = request.accessToken as AccessToken;
+        this.storeRequests();
     }
 
     private load() {
@@ -238,7 +250,7 @@ export default class OAuthClient {
                 if (options.jsonEncBody) {
                     postData = JSON.stringify({
                         "grant_type" : "authorization_code",
-                        "code": encodeURIComponent(authCode),
+                        "code": authCode,
                         "redirect_uri" : this.config.redirect_uri
                     });
                 } else {
