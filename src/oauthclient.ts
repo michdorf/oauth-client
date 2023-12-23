@@ -5,7 +5,7 @@ import ajax, {Setup} from './ajax'
 /// <reference path="randomstr.ts" />
 
 interface Configuration {
-    storageKey: string;
+    storageKey?: string;
     authorization_url: string;
     token_url?: string;
     client_id: string;
