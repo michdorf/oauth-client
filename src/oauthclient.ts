@@ -131,6 +131,14 @@ export default class OAuthClient {
     }
 
     /**
+     * Should revoke the token
+     */
+    logout() {
+        this.requests = [];
+        this.storeRequests();
+    }
+
+    /**
      * Requests first authCode
      */
     authorizationCode(scopes: string, usePCKE?: boolean) {
