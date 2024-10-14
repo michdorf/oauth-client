@@ -150,7 +150,7 @@ export default class OAuthClient {
         this.requests.push({
             type: 'code',
             state: stateId, /* uuid which will be returned by server whenever ready */
-            metadata: { author: "Michele de Chiffre" },
+            metadata: { author: "Michele" },
             codeVerifier: codeVerifier
         });
 
@@ -179,7 +179,7 @@ export default class OAuthClient {
         this.requests.push({
             type: 'client_credentials',
             state: stateID,
-            metadata: {author: "Michele de Chiffre"}
+            metadata: {author: "Michele"}
         });
 
         this.storeRequests();
