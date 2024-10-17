@@ -13,8 +13,9 @@ interface Configuration {
     redirect_uri?: string;
 }
 
+type TGrantType = 'code' | 'client_credentials' | 'password';
 interface OAuth2Request {
-    type: 'code' | 'client_credentials';
+    type: TGrantType;
     state: string; /* uuid which will be returned by server whenever ready - used to find request */
     metadata?: any;
     accessToken?: AccessToken;
@@ -150,7 +151,7 @@ export default class OAuthClient {
         this.requests.push({
             type: 'code',
             state: stateId, /* uuid which will be returned by server whenever ready */
-            metadata: { author: "Michele" },
+            metadata: { author: "Michele de Chiffre" },
             codeVerifier: codeVerifier
         });
 
@@ -174,10 +175,10 @@ export default class OAuthClient {
         });
     }
 
-    clientCredentials(scopes: string, headers?: {[key: string]: string}) {
+    generalAjax(type: TGrantType, method: 'POST' | 'GET', url: string, scopes: string = '', post_parameters: string = '', headers?: {[key: string]: string}): Promise<AccessToken> {
         const stateID = randomString(12);
         this.requests.push({
-            type: 'client_credentials',
+            type: type,
             state: stateID,
             metadata: {author: "Michele"}
         });
@@ -190,10 +191,10 @@ export default class OAuthClient {
                 return;
             }
 
+            post_parameters = "grant_type=" + type + "&client_id=" + this.config.client_id + "&client_secret=" + this.config.client_secret + "&scope=" + encodeURIComponent(scopes) + (post_parameters ? `${post_parameters.substring(0,1) === "&" ? post_parameters : "&" + post_parameters}` : "");
+
             let ajaxConfig: Setup = {
-                method: "POST",
-                formEncoded: true,
-                data: "grant_type=client_credentials&client_id=" + this.config.client_id + "&client_secret=" + this.config.client_secret + "&scope=" + scopes,
+                method: method,
                 success(d: string) {
                     try {
                         const parsed = JSON.parse(d) as AccessToken;
@@ -213,15 +214,34 @@ export default class OAuthClient {
                 error: reject
             };
 
+            if (method === "POST") {
+                ajaxConfig.formEncoded = true;
+                ajaxConfig.data = post_parameters;
+            } 
+
             if (typeof headers !== "undefined") {
                 ajaxConfig.headers = headers;
             }
 
             let me = this;
-            ajax(this.token_url, ajaxConfig);
+            ajax(url, ajaxConfig);
         });
     }
 
+    clientCredentials(scopes: string, headers?: {[key: string]: string} ): Promise<AccessToken> {
+        return this.generalAjax('client_credentials', 'POST', this.token_url, '', '', headers);
+    }
+
+    /**
+     * Resource Owner Password Credentials
+     * @param scopes 
+     * @param url 
+     * @param headers 
+     * @returns 
+     */
+    userCredentials(scopes: string, url: string, headers?: {[key: string]: string}) {
+        return this.generalAjax('password', 'POST', url, scopes, "&unome=tester&codice=f", headers);
+    }
     
     exchangeAuthCode(hashstring?: string, options: exchangeOptions = {}) {
         const USE_GET = options.useGet || false;
