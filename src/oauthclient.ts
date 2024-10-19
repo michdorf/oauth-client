@@ -7,6 +7,7 @@ import ajax, {Setup} from './ajax'
 interface Configuration {
     storageKey?: string;
     authorization_url: string;
+    revoke_url?: string;
     token_url?: string;
     client_id: string;
     client_secret?: string;
@@ -68,7 +69,7 @@ export default class OAuthClient {
 
     private config: Configuration;
     private requests: OAuth2Request[] = [];
-    
+
     private accessToken: AccessToken;
 
     get authorization_url() {
@@ -107,7 +108,7 @@ export default class OAuthClient {
         if (window.location.hash.indexOf("code=")) {
             this.exchangeAuthCode();
         } else {
-            this.authorizationCode("wwapp offline_access");
+            this.authorizationCode("offline_access");
         }
     }
 
@@ -135,8 +136,38 @@ export default class OAuthClient {
      * Should revoke the token
      */
     logout() {
-        this.requests = [];
-        this.storeRequests();
+      this.revoke(this.getAccessToken() || undefined);
+      this.requests = [];
+      this.storeRequests();
+    }
+
+    revoke(access_token?: string, refresh_token?: string) {
+      access_token = access_token || this.getAccessToken() || '';
+      refresh_token = refresh_token || this.getRefreshToken() || '';
+      if (!access_token) {
+        throw new Error("No token found in oauthclient.revoke()");
+      }
+      if (!this.config.revoke_url) {
+        throw new Error("Missing revoke URL in oauth config.");
+      }
+
+      if (refresh_token) {
+        fetch(this.config.revoke_url, {
+          method: "POST",
+          headers: {
+            'Content-type': 'application/x-www-form-urlencoded'
+          },
+          body: `client_id=${this.config.client_id}&token_type_hint=refresh_token&token=${refresh_token}`,
+        }).then(r => r);
+      }
+
+      return fetch(this.config.revoke_url, {
+          method: "POST",
+          headers: {
+            'Content-type': 'application/x-www-form-urlencoded'
+          },
+          body: `client_id=${this.config.client_id}&token_type_hint=access_token&token=${access_token}`,
+        });
     }
 
     /**
@@ -217,7 +248,7 @@ export default class OAuthClient {
             if (method === "POST") {
                 ajaxConfig.formEncoded = true;
                 ajaxConfig.data = post_parameters;
-            } 
+            }
 
             if (typeof headers !== "undefined") {
                 ajaxConfig.headers = headers;
@@ -234,15 +265,15 @@ export default class OAuthClient {
 
     /**
      * Resource Owner Password Credentials
-     * @param scopes 
-     * @param url 
-     * @param headers 
-     * @returns 
+     * @param scopes
+     * @param url
+     * @param headers
+     * @returns
      */
-    userCredentials(scopes: string, url: string, headers?: {[key: string]: string}) {
-        return this.generalAjax('password', 'POST', url, scopes, "&unome=tester&codice=f", headers);
+    userCredentials(scopes: string, url: string, unome: string, codice: string, headers?: {[key: string]: string}) {
+      return this.generalAjax('password', 'POST', url, scopes, `&unome=${unome}&codice=${codice}`, headers);
     }
-    
+
     exchangeAuthCode(hashstring?: string, options: exchangeOptions = {}) {
         const USE_GET = options.useGet || false;
 
@@ -295,7 +326,7 @@ export default class OAuthClient {
                 let config: RequestInit = {
                     method: USE_GET ? "GET" : "POST",
                 };
-                
+
                 let headers: {Authorization?: string, 'Content-Type'?: string} = {};
                 if (options.basicAuth) {
                     headers['Authorization'] = 'Basic ' + btoa(this.config.client_id + ":" + this.config.client_secret);
@@ -381,7 +412,7 @@ export default class OAuthClient {
                     request.accessToken = Object.assign({}, request.accessToken, respData, {expires});
                     this.accessToken = request.accessToken;
                     this.storeRequests();
-                    
+
                     resolve(request.accessToken);
                 },
                 error: reject
