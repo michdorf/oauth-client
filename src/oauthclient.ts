@@ -43,7 +43,7 @@ interface AccessToken extends AccessTokenResponse {
 }
 
 class Stoccaggio {
-    private storageKey = "ab-oauth-requests";
+    storageKey = "ab-oauth-requests";
     constructor(storageKey?: string) {
         if (typeof storageKey !== "undefined") {
             this.storageKey = storageKey;
@@ -64,6 +64,8 @@ class Stoccaggio {
         return "";
     }
 }
+
+let _storListenerSet = false;
 export default class OAuthClient {
     private stoccaggio: Stoccaggio;
 
@@ -89,6 +91,11 @@ export default class OAuthClient {
 
         if (!this.config.token_url) {
             this.config.token_url = this.config.authorization_url.replace("/authorize", "/token");
+        }
+
+        if (!_storListenerSet) {
+            addEventListener("storage", this.handleUpdates.bind(this));
+            _storListenerSet = true;
         }
 
         this.accessToken = {
@@ -126,6 +133,12 @@ export default class OAuthClient {
         request.accessToken = Object.assign({expires}, access_token);
         this.accessToken = request.accessToken as AccessToken;
         this.storeRequests();
+    }
+
+    private handleUpdates(event: StorageEvent) {
+        if (event.key === this.stoccaggio.storageKey) {
+            this.load();
+        }
     }
 
     private load() {
