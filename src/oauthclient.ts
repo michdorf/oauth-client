@@ -223,14 +223,17 @@ export default class OAuthClient {
     }
 
     generalAjax(type: TGrantType, method: 'POST' | 'GET', url: string, scopes: string = '', post_parameters: string = '', headers?: {[key: string]: string}): Promise<AccessToken> {
-        const stateID = randomString(12);
-        this.requests.push({
-            type: type,
-            state: stateID,
-            metadata: {author: "Michele"}
-        });
+        let stateID = '';
+        if (type !== "client_credentials") {
+            let stateID = randomString(12);
+            this.requests.push({
+                type: type,
+                state: stateID,
+                metadata: {author: "Michele"}
+            });
 
-        this.storeRequests();
+            this.storeRequests();
+        }
 
         return new Promise((resolve, reject) => {
             if (typeof this.config.client_secret === "undefined") {
@@ -246,13 +249,16 @@ export default class OAuthClient {
                     try {
                         const parsed = JSON.parse(d) as AccessToken;
 
-                        const oauth2req = me.loadRequests(stateID);
-                        if (!oauth2req) {
-                            reject(`Request not found for state ${stateID}`);
-                            return;
+                        if (type !== "client_credentials") {
+                            const oauth2req = me.loadRequests(stateID);
+                            if (!oauth2req) {
+                                reject(`Request not found for state ${stateID}`);
+                                return;
+                            }
+                            oauth2req.accessToken = parsed;
+                            me.storeRequests();
                         }
-                        oauth2req.accessToken = parsed;
-                        me.storeRequests();
+
                         resolve(parsed);
                     } catch (e) {
                         reject(`Error parsing response ${d}`);
