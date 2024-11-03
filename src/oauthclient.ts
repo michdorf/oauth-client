@@ -259,8 +259,14 @@ export default class OAuthClient {
         });
     }
 
-    clientCredentials(scopes: string, headers?: {[key: string]: string} ): Promise<AccessToken> {
-        return this.generalAjax('client_credentials', 'POST', this.token_url, '', '', headers);
+    /**
+     * NOTE: access token will not be saved in localstorage with client credentials flow
+     * @param scopes
+     * @param headers
+     * @returns
+     */
+    clientCredentials(scopes?: string, headers?: {[key: string]: string} ): Promise<AccessToken> {
+        return this.generalAjax('client_credentials', 'POST', this.token_url, scopes, '', headers);
     }
 
     /**
