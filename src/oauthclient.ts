@@ -214,7 +214,10 @@ export default class OAuthClient {
             }
 
             if (typeof window !== "undefined") {
-                window.location.href = endpoint;
+                let w = window.open(endpoint, '', 'popup');
+                if (w == null) {
+                  window.location.href = endpoint;
+                }
             }
         });
     }
